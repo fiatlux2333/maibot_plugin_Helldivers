@@ -1,5 +1,6 @@
-# MaiBot Runner 自动生成并维护的运行时配置
-/config.toml
+# 运行时产物（config.toml 作为带注释的模板入库，见 tools/gen_config_toml.py）
+config.toml.bak
+config.toml.tmp
 
 __pycache__/
 *.py[cod]
