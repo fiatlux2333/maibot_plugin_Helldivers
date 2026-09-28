@@ -1,0 +1,14 @@
+# MaiBot Runner 自动生成并维护的运行时配置
+/config.toml
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+.ruff_cache/
+
+# 本地开发环境产物
+/.zcode/
+/.zcodeignore
+/data_runtime/
