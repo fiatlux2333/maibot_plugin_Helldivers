@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "id": "com.fiatlux.hd2-helper",
+  "id": "github.fiatlux2333.hd2-helper",
   "version": "1.0.0",
   "name": "绝地潜兵2情报助手",
   "description": "Helldivers 2 银河战争图片情报：Dashboard、统计、主要任务、地图、战线、全球事件、Steam 公告、Wiki、军需簿、Companion 截图翻译、B站银河快报订阅推送与数据源自诊断。移植自 astrbot_plugin_Helldivers v1.9.0。",
@@ -10,9 +10,10 @@
   },
   "license": "MIT",
   "urls": {
-    "repository": "https://github.com/fiatlux2333/Helldivers2-Chinese-Helper",
-    "documentation": "https://github.com/fiatlux2333/Helldivers2-Chinese-Helper#readme",
-    "issues": "https://github.com/fiatlux2333/Helldivers2-Chinese-Helper/issues"
+    "repository": "https://github.com/fiatlux2333/maibot_plugin_Helldivers",
+    "homepage": "https://github.com/fiatlux2333/maibot_plugin_Helldivers",
+    "documentation": "https://github.com/fiatlux2333/maibot_plugin_Helldivers/blob/main/README.md",
+    "issues": "https://github.com/fiatlux2333/maibot_plugin_Helldivers/issues"
   },
   "host_application": {
     "min_version": "1.0.0",
