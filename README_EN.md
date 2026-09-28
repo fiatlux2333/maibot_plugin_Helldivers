@@ -21,8 +21,8 @@ caching, rate-limited retries, glossary pre-substitution, and AI translation.
   warm-up and automatic push of news updates to subscribed groups.
 - **External info**: Steam update announcements, Helldivers Wiki lookup
   (with automatic Chinese translation), and the arsenal equipment/enemy database.
-- **Bilibili Galaxy News**: watches a configured uploader's dynamics and pushes
-  keyword-matched posts to subscribed groups.
+- **Bilibili Galaxy News**: watches a configured Bilibili uploader's posts and
+  pushes keyword-matched ones to subscribed groups.
 - **Data-source self-diagnostic**: `/hd2ping` reports data-source health,
   cache age, and key configuration at a glance.
 
@@ -42,13 +42,13 @@ caching, rate-limited retries, glossary pre-substitution, and AI translation.
 | `/hd2data <name>` | Arsenal lookup; supports nicknames (e.g., 电喷, 泰坦) |
 | `/hd2ping` | Data-source health / cache-age self-diagnostic |
 | `/hd2news` | Companion latest news (screenshot + translation) |
-| `/hd2news subscribe` / `/hd2news unsubscribe` | Toggle automatic news-update push for this group |
+| `/hd2news订阅` (subscribe) / `/hd2news退订` (unsubscribe) | Toggle automatic news-update push for this group |
 | `/companion` | Companion homepage screenshot |
 | `/dss` | Democratic Space Station panel + Chinese intel |
 | `/planet <name/number/link>` | Planet detail screenshot (supports Chinese names and links) |
 | `/hd2refresh` | Force-refresh Companion screenshot cache |
 | `/银河快报` (galaxy_news) | Fetch the latest Bilibili Galaxy News issue immediately |
-| `/银河快报 subscribe` / `/银河快报 unsubscribe` | Toggle Galaxy News push for this group |
+| `/银河快报订阅` (galaxy_news_subscribe) / `/银河快报退订` (galaxy_news_unsubscribe) | Toggle Galaxy News push for this group |
 | `/hd2`, `/hd2help` | Short help / full command list |
 
 All commands accept both a `/` prefix and the bare command word (e.g. `总览`,
@@ -61,26 +61,47 @@ All commands accept both a `/` prefix and the bare command word (e.g. `总览`,
    `_manifest.json` (aiohttp, Pillow) are installed automatically by the
    dependency pipeline; you can also run `pip install -r requirements.txt`
    manually.
-3. On first load the Runner generates `config.toml` in the plugin directory;
-   edit it via the MaiBot WebUI.
+3. On first load the Runner validates and merges `config.toml`. The shipped
+   `config.toml` comes with Chinese comments and default values (the Runner
+   merges by filling in missing fields and keeps the comments); you can also
+   edit it in the MaiBot WebUI.
 
 ### Optional: Companion webpage screenshots
 
 `/hd2news`, `/companion`, `/dss`, and `/planet` require Playwright + Chromium:
 
 ```bash
-pip install playwright>=1.50.0
-python -m playwright install chromium
+pip install "playwright>=1.50.0"
+python -m playwright install --with-deps chromium
 ```
 
 Without it these commands degrade gracefully with a hint; other commands are
 unaffected.
 
+**System libraries**: Playwright's Chromium requires system libraries; when
+they are missing, screenshots fail with `Host system is missing dependencies`
+or simply time out. `--with-deps` installs them automatically via apt
+(Debian/Ubuntu).
+
+**Chinese fonts**: a CJK font must be installed (Debian/Ubuntu:
+`apt-get install fonts-noto-cjk`). A missing font does **not** raise an error,
+but Chinese text in the Pillow-rendered cards and in Companion screenshots
+shows up as tofu boxes (□). The plugin looks up fonts in the order
+`NotoSansCJK` → `wqy-zenhei` → `DejaVu`.
+
+**If Chromium download is slow or blocked** (common on mainland-China servers):
+download the matching `chrome-headless-shell-linux64.zip` on a machine with
+normal internet access (the plugin launches headless, so the full Chrome build
+is not needed), then unzip it into
+`~/.cache/ms-playwright/chromium_headless_shell-<build>/` and `chmod +x`. The
+build number appears in the `playwright install` error message.
+
 ## Configuration
 
-On first load the Runner generates `config.toml` from the config model and
-renders a form in the WebUI; changes take effect after reloading the plugin.
-There are 87 config fields in total. Key fields:
+The shipped `config.toml` comes with Chinese comments and default values
+(88 fields including the Runner-reserved section); the MaiBot WebUI settings
+form is shown in Chinese as well. Changes take effect after reloading the
+plugin. Key fields:
 
 | Field | Description |
 |---|---|
@@ -118,7 +139,7 @@ Full field list and descriptions: [`hd2/config_schema.py`](hd2/config_schema.py)
 - [Steam News API](https://store.steampowered.com/news/?appids=553850) — Steam update announcements
 - [Helldivers Wiki](https://helldivers.wiki.gg) — wiki articles
 - [Helldivers Companion](https://helldiverscompanion.com) — webpage screenshots and personal orders
-- Bilibili Galaxy News space — Galaxy News dynamics
+- Bilibili Galaxy News space — Galaxy News posts
 
 > Trend speed, estimated completion time, and faction warfronts are
 > plugin-computed estimates and do not represent official conclusions.
