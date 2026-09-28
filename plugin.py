@@ -983,6 +983,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "hd2stats",
         description="查看当前银河战争实时统计（图片）",
         pattern=r"(?i)^\s*[/!]?\s*hd2stats\s*$",
+        timeout_ms=120000,
     )
     async def cmd_stats(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1001,6 +1002,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "dashboard",
         description="银河战争总览 Dashboard（图片，实时数据）",
         pattern=r"(?i)^\s*[/!]?\s*(?:dashboard|总览|战况总览)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_dashboard(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1019,6 +1021,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "order",
         description="获取当前活跃的最高命令 / 主要任务（图片）",
         pattern=r"(?i)^\s*[/!]?\s*(?:order|major_order|最高命令)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_order(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1037,6 +1040,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "personal_order",
         description="查看个人任务 Personal Order（图片）",
         pattern=r"(?i)^\s*[/!]?\s*(?:personal_order|po|个人任务)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_personal_order(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1055,6 +1059,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "map",
         description="生成当前银河战争地图图片",
         pattern=r"(?i)^\s*[/!]?\s*(?:map|地图)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_map(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1085,6 +1090,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "warfront",
         description="查看特定阵营战线（图片），用法: /warfront Terminids",
         pattern=r"(?i)^\s*[/!]?\s*(?:warfront|战线)(?:\s+(?P<faction>.+?))?\s*$",
+        timeout_ms=120000,
     )
     async def cmd_warfront(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1107,6 +1113,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "global_events",
         description="查看全球事件（图片）",
         pattern=r"(?i)^\s*[/!]?\s*(?:global_events|全球事件|events)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_global_events(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1125,6 +1132,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "steam",
         description="获取最新 Steam 新闻（图片优先，文本兜底）",
         pattern=r"(?i)^\s*[/!]?\s*steam\s*$",
+        timeout_ms=120000,
     )
     async def cmd_steam(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1155,6 +1163,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "wiki",
         description="查询 Helldivers Wiki，用法: /wiki <关键词> [-f 全文]",
         pattern=r"(?i)^\s*[/!]?\s*(?:wiki|维基|百科)(?:\s+(?P<query>.+?))?\s*$",
+        timeout_ms=120000,
     )
     async def cmd_wiki(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1180,6 +1189,7 @@ class HelldiversPlugin(MaiBotPlugin):
             r"(?i)^\s*[/!]?\s*(?:hd2data|军需簿|数据库|装备|武器库)"
             r"(?:\s+(?P<query>.+?))?\s*$"
         ),
+        timeout_ms=120000,
     )
     async def cmd_arsenal_data(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1209,6 +1219,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "hd2ping",
         description="自诊断：各数据源健康、缓存年龄与关键配置一览",
         pattern=r"(?i)^\s*[/!]?\s*(?:hd2ping|诊断|自检)\s*$",
+        timeout_ms=120000,
     )
     async def cmd_hd2ping(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1305,6 +1316,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "hd2news",
         description="截图 Companion 最新新闻（翻译后返回）",
         pattern=r"(?i)^\s*[/!]?\s*hd2news\s*$",
+        timeout_ms=180000,
     )
     async def cmd_news(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1348,6 +1360,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "companion",
         description="截图 Helldivers Companion 首页并翻译",
         pattern=r"(?i)^\s*[/!]?\s*(?:companion|首页|companion_home)\s*$",
+        timeout_ms=180000,
     )
     async def cmd_companion(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1372,6 +1385,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "dss",
         description="截图 Companion DSS 页面并附中文情报",
         pattern=r"(?i)^\s*[/!]?\s*(?:dss|空间站|民主空间站)\s*$",
+        timeout_ms=180000,
     )
     async def cmd_dss(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1399,6 +1413,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "planet",
         description="截图 Companion 星球页，用法: /planet <名称/编号/链接>",
         pattern=r"(?i)^\s*[/!]?\s*(?:planet|星球)(?:\s+(?P<query>.+?))?\s*$",
+        timeout_ms=180000,
     )
     async def cmd_planet(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1484,6 +1499,7 @@ class HelldiversPlugin(MaiBotPlugin):
         "hd2refresh",
         description="强制刷新 Companion 截图缓存（跳过缓存重新截图+翻译）",
         pattern=r"(?i)^\s*[/!]?\s*(?:hd2refresh|刷新缓存|hd2clear)\s*$",
+        timeout_ms=300000,
     )
     async def cmd_refresh(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
@@ -1589,6 +1605,7 @@ class HelldiversPlugin(MaiBotPlugin):
         pattern=(
             r"(?i)^\s*[/!]?\s*(?:银河快报|galaxy_news)(?:推送)?\s*$"
         ),
+        timeout_ms=120000,
     )
     async def cmd_galaxy_news(self, **kwargs: Any) -> tuple[bool, str, int]:
         stream_id = self._session_key(kwargs)
