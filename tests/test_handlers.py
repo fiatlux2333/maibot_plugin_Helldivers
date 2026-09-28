@@ -17,6 +17,7 @@ class FakeSend:
     def __init__(self) -> None:
         self.texts: list[tuple[str, str]] = []
         self.images: list[tuple[bytes, str]] = []
+        self.hybrids: list[tuple[list, str]] = []
 
     async def text(self, content: str, stream_id: str, **kwargs):
         self.texts.append((content, stream_id))
@@ -24,6 +25,15 @@ class FakeSend:
 
     async def image(self, data: str, stream_id: str, **kwargs):
         self.images.append((base64.b64decode(data), stream_id))
+        return True
+
+    async def hybrid(self, segments: list, stream_id: str, **kwargs):
+        self.hybrids.append((segments, stream_id))
+        for seg in segments:
+            if seg.get("type") == "image":
+                self.images.append((base64.b64decode(seg["content"]), stream_id))
+            elif seg.get("type") == "text":
+                self.texts.append((seg["content"], stream_id))
         return True
 
 
@@ -120,7 +130,11 @@ async def main() -> int:
     async def broken_image(data, stream_id, **kw):
         raise RuntimeError("send failed")
 
+    async def broken_hybrid(segments, stream_id, **kw):
+        raise RuntimeError("hybrid failed")
+
     ctx_map.send.image = broken_image
+    ctx_map.send.hybrid = broken_hybrid
     inst._ctx = ctx_map
     await inst.cmd_map(stream_id="s6")
     captions = [t for t, _ in ctx_map.send.texts if t.startswith("CAPTION")]
@@ -128,13 +142,15 @@ async def main() -> int:
     assert any("图片发送失败" in t for t, _ in ctx_map.send.texts)
     print("[OK] cmd_map 图片失败仅补发说明，不重复 caption")
 
-    # 10) cmd_map：图片成功时不发失败说明
+    # 10) cmd_map：成功路径应走 hybrid 合并为一条消息
     ctx_map2 = FakeCtx()
     inst._ctx = ctx_map2
     await inst.cmd_map(stream_id="s6")
-    assert len(ctx_map2.send.images) == 1
+    assert len(ctx_map2.send.hybrids) == 1, "成功路径应使用 hybrid 单条发送"
+    segs = ctx_map2.send.hybrids[0][0]
+    assert [s["type"] for s in segs] == ["text", "image"], f"段顺序异常: {segs}"
     assert not any("图片发送失败" in t for t, _ in ctx_map2.send.texts)
-    print("[OK] cmd_map 成功路径正常发送")
+    print("[OK] cmd_map 成功路径 hybrid 合并为一条图文消息")
 
     inst.service = None
 

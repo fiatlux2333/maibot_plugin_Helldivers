@@ -101,10 +101,10 @@ class HD2Config(PluginConfigBase):
         description="Companion 页面加载后的额外等待时间（毫秒）；SPA 页面建议 3000-8000",
     )
     companion_page_load_timeout: float = Field(
-        default=20.0,
+        default=40.0,
         description=(
             "Companion 页面数据加载等待时间（秒）；等待 PLEASE WAIT DEMOCRATICALLY "
-            "消失或目标页面就绪，云服务器建议 20-40"
+            "消失或目标页面就绪，国内服务器建议 30-40"
         ),
     )
     companion_translation_timeout: float = Field(
@@ -490,3 +490,69 @@ class HD2Config(PluginConfigBase):
             "「低影响星球」汇总"
         ),
     )
+
+
+def _derive_label(description: str) -> str:
+    """从字段描述派生简短中文标签（在最早出现的分隔符处截断）。"""
+    text = (description or "").strip()
+    cut = len(text)
+    for ch in "；：（，。(":
+        idx = text.find(ch)
+        if 0 < idx < cut:
+            cut = idx
+    return text[:cut].strip() or text
+
+
+_LABEL_OVERRIDES: dict[str, str] = {
+    "api_base": "主 API 地址",
+    "companion_screenshot_wait_ms": "页面加载后额外等待(ms)",
+    "companion_page_load_timeout": "页面数据加载等待(s)",
+    "companion_translation_timeout": "前台翻译等待(s)",
+    "companion_translation_batch_timeout": "单批翻译等待(s)",
+    "companion_screenshot_cache_ttl": "截图缓存时长(s)",
+    "companion_screenshot_max_bytes": "单张截图最大字节",
+    "companion_screenshot_max_pixels": "单张截图最大像素",
+    "companion_show_inactive": "显示低活跃度战役",
+    "companion_warmup_interval": "预热间隔(s)",
+    "companion_warmup_kinds": "预热页面",
+    "companion_news_push_enabled": "启用新闻推送",
+    "enable_companion_screenshots": "启用 Companion 截图",
+    "companion_render_backend": "Companion 截图后端",
+    "enable_bilibili_galaxy_news": "启用银河快报推送",
+    "bilibili_cookie": "B站 Cookie",
+    "bilibili_poll_interval": "B站轮询间隔(s)",
+    "bilibili_image_max_bytes": "B站单图最大字节",
+    "bilibili_image_max_pixels": "长图最大解码像素",
+    "enable_background_refresh": "启用后台定时同步",
+    "cache_update_interval": "缓存刷新间隔(s)",
+    "request_delay": "批量请求间隔(s)",
+    "min_request_interval": "API 最小请求间隔(s)",
+    "translation_stream": "翻译使用流式响应",
+    "translation_max_tokens": "翻译最大 token",
+    "translation_min_interval_seconds": "翻译最小间隔(s)",
+    "translation_error_cooldown_seconds": "翻译错误冷却(s)",
+    "translation_retry_fallback_seconds": "翻译回退缓存(s)",
+    "drop_untranslated_content": "剔除未翻译英文",
+    "steam_balancing_limit": "平衡性调整节长度",
+    "steam_fixes_limit": "修复节长度",
+    "steam_issues_limit": "已知问题节长度",
+    "steam_appid": "Steam App ID",
+    "wiki_full_extract_chars": "Wiki 全文最大字符",
+    "translate_wiki": "翻译 Wiki 摘要",
+    "map_visual_mode": "地图视觉模式",
+    "personal_order_api_url": "个人任务数据源 URL",
+    "allow_private_personal_order_url": "允许访问私有网络",
+    "campaign_history_hours": "趋势历史保留(小时)",
+    "campaign_rate_window_minutes": "趋势采样窗口(分钟)",
+    "dashboard_low_impact_threshold": "低影响星球阈值",
+    "plugin": "保留节(勿改)",
+}
+
+# 为每个字段注入中文 label（WebUI 表单以 label 为显示名，字段名保持不变）
+for _cls in (_PluginSection, HD2Config):
+    for _name, _field in _cls.model_fields.items():
+        _extra = dict(_field.json_schema_extra or {})
+        _extra["label"] = _LABEL_OVERRIDES.get(_name) or _derive_label(
+            str(_field.description or "")
+        )
+        _field.json_schema_extra = _extra

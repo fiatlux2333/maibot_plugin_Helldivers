@@ -168,6 +168,9 @@ _CMD_WEIGHT = 2
 # 图片以 base64（≈原始体积 4/3）随信封过帧；预留余量后的单张原始字节预算。
 _MAX_IMAGE_WIRE_BYTES = 11 * 1024 * 1024
 
+# 一条 hybrid 消息（全部段合计）的线材预算；超出则降级为逐条发送。
+_HYBRID_WIRE_BUDGET = 12 * 1024 * 1024
+
 
 class HelldiversPlugin(MaiBotPlugin):
     """Helldivers 2 银河战争情报助手。"""
@@ -618,6 +621,55 @@ class HelldiversPlugin(MaiBotPlugin):
             return False
         return await self._send_image_bytes(stream_id, data)
 
+    async def _send_hybrid_message(
+        self,
+        stream_id: str,
+        *,
+        text: str | None = None,
+        image_paths: list[Path] | None = None,
+        tail_text: str | None = None,
+    ) -> bool:
+        """把文本与图片合成为一条混合消息发送；超帧预算或失败返回 False。
+
+        segments 走 SDK 约定的 {"type": "text"|"image", "content": ...}；
+        Host 侧会把 image 的 content 归一化为 binary_data_base64。
+        """
+        if not stream_id:
+            return False
+        images: list[str] = []
+        wire = 0
+        for path in image_paths or []:
+            try:
+                raw = await asyncio.to_thread(path.read_bytes)
+            except OSError as e:
+                logger.warning(f"[HD2] image unreadable: {path} error={e}")
+                return False
+            fitted = await asyncio.to_thread(self._fit_image_for_transport, raw)
+            if fitted is None:
+                return False
+            encoded = base64.b64encode(fitted).decode("ascii")
+            wire += len(encoded)
+            images.append(encoded)
+        wire += len((text or "").encode("utf-8")) + len(
+            (tail_text or "").encode("utf-8")
+        )
+        if wire > _HYBRID_WIRE_BUDGET:
+            return False
+        segments: list[dict[str, str]] = []
+        if text:
+            segments.append({"type": "text", "content": text})
+        for encoded in images:
+            segments.append({"type": "image", "content": encoded})
+        if tail_text:
+            segments.append({"type": "text", "content": tail_text})
+        if not segments:
+            return False
+        try:
+            return bool(await self.ctx.send.hybrid(segments, stream_id))
+        except Exception as e:
+            logger.warning(f"[HD2] send hybrid failed: {e}")
+            return False
+
     async def _send_images(
         self,
         stream_id: str,
@@ -625,9 +677,11 @@ class HelldiversPlugin(MaiBotPlugin):
         *,
         fallback: str = "❌ 生成图片失败，请稍后重试。",
     ) -> bool:
-        """逐张发送图片；全部失败时发送 fallback 文本。"""
+        """优先合成一条多图消息；失败降级为逐张发送。"""
         if not paths:
             return await self._send_text(stream_id, fallback)
+        if await self._send_hybrid_message(stream_id, image_paths=paths):
+            return True
         sent_any = False
         for path in paths:
             if await self._send_image_path(stream_id, path):
@@ -642,15 +696,23 @@ class HelldiversPlugin(MaiBotPlugin):
         *,
         text: str | None = None,
         image_paths: list[Path] | None = None,
-    ) -> bool:
-        """先文本后图片的顺序发送（替代 AstrBot 的 chain_result）。"""
-        ok = True
+        tail_text: str | None = None,
+    ) -> tuple[bool, bool]:
+        """优先单条图文混合消息；失败降级为逐条。返回 (文本送达, 图片送达)。"""
+        if await self._send_hybrid_message(
+            stream_id, text=text, image_paths=image_paths, tail_text=tail_text
+        ):
+            return True, True
+        text_ok = True
         if text:
-            ok = await self._send_text(stream_id, text) and ok
+            text_ok = await self._send_text(stream_id, text)
+        images_ok = True
         for path in image_paths or []:
             if not await self._send_image_path(stream_id, path):
-                ok = False
-        return ok
+                images_ok = False
+        if tail_text:
+            text_ok = await self._send_text(stream_id, tail_text) and text_ok
+        return text_ok, images_ok
 
     def _svc(self) -> HelldiversService:
         if self.service is None:
@@ -854,20 +916,15 @@ class HelldiversPlugin(MaiBotPlugin):
         if not path or not path.is_file():
             logger.warning("[HD2] Companion news push image missing: %s", path)
             return 0
-        try:
-            image_bytes = await asyncio.to_thread(path.read_bytes)
-        except OSError as exc:
-            logger.warning(
-                "[HD2] Companion news push image unreadable: %s error=%s",
-                path,
-                exc,
-            )
-            return 0
         delivered = 0
         for stream_id in sessions:
             try:
-                sent = await self._send_text(stream_id, "📰 Companion 新闻更新")
-                sent = await self._send_image_bytes(stream_id, image_bytes) and sent
+                text_ok, images_ok = await self._send_mixed(
+                    stream_id,
+                    text="📰 Companion 新闻更新",
+                    image_paths=[path],
+                )
+                sent = text_ok and images_ok
             except Exception as e:
                 logger.warning(
                     "[HD2] Companion news push failed: session=%s error=%s",
@@ -908,26 +965,16 @@ class HelldiversPlugin(MaiBotPlugin):
             )
             return 0
         text = post.text or "（该动态没有文字内容）"
-        image_bytes: list[bytes] = []
-        for path in image_paths:
-            try:
-                image_bytes.append(await asyncio.to_thread(path.read_bytes))
-            except OSError as exc:
-                logger.warning(
-                    "[HD2] Bilibili image unreadable: path=%s error=%s",
-                    path,
-                    exc,
-                )
         delivered = 0
         for stream_id in sessions:
             try:
-                sent = await self._send_text(stream_id, f"【{post.author}】\n{text}")
-                for data in image_bytes:
-                    sent = await self._send_image_bytes(stream_id, data) and sent
-                sent = (
-                    await self._send_text(stream_id, f"\n原动态：{post.url}")
-                    and sent
+                text_ok, images_ok = await self._send_mixed(
+                    stream_id,
+                    text=f"【{post.author}】\n{text}",
+                    image_paths=image_paths,
+                    tail_text=f"\n原动态：{post.url}",
                 )
+                sent = text_ok and images_ok
             except Exception as e:
                 logger.warning(
                     "[HD2] Bilibili push failed: session=%s dynamic=%s error=%s",
@@ -1071,14 +1118,15 @@ class HelldiversPlugin(MaiBotPlugin):
             return True, "生成地图失败", _CMD_WEIGHT
 
         if path is not None:
-            text_sent = await self._send_text(stream_id, caption + "\n")
-            image_sent = await self._send_image_path(stream_id, path)
-            if image_sent:
+            text_ok, images_ok = await self._send_mixed(
+                stream_id, text=caption + "\n", image_paths=[path]
+            )
+            if images_ok:
                 return True, "已发送银河战争地图", _CMD_WEIGHT
             # 文本已送达时不再重复 caption，仅补一条失败说明。
             note = (
                 f"（图片发送失败: {path}）"
-                if text_sent
+                if text_ok
                 else caption + f"\n（图片发送失败: {path}）"
             )
             await self._send_text(stream_id, note)
@@ -1639,9 +1687,11 @@ class HelldiversPlugin(MaiBotPlugin):
                 return True, "未匹配到银河快报动态", _CMD_WEIGHT
             paths = await monitor.download_images(post)
             await self._send_mixed(
-                stream_id, text=f"【{post.author}】\n{post.text}", image_paths=paths
+                stream_id,
+                text=f"【{post.author}】\n{post.text}",
+                image_paths=paths,
+                tail_text=f"\n原动态：{post.url}",
             )
-            await self._send_text(stream_id, f"\n原动态：{post.url}")
         except (BilibiliAuthenticationError, BilibiliRiskControlError) as e:
             logger.warning(f"[HD2] manual Bilibili galaxy news blocked: {e}")
             await self._send_text(stream_id, f"❌ {e}")

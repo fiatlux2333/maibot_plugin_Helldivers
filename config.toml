@@ -56,8 +56,8 @@ companion_screenshot_timeout = 60
 # Companion 页面加载后的额外等待时间（毫秒）；SPA 页面建议 3000-8000
 companion_screenshot_wait_ms = 5000
 
-# Companion 页面数据加载等待时间（秒）；等待 PLEASE WAIT DEMOCRATICALLY 消失或目标页面就绪，云服务器建议 20-40
-companion_page_load_timeout = 20.0
+# Companion 页面数据加载等待时间（秒）；等待 PLEASE WAIT DEMOCRATICALLY 消失或目标页面就绪，国内服务器建议 30-40
+companion_page_load_timeout = 40.0
 
 # Companion 前台翻译等待时间（秒）；免费模型建议 45-90，超时后发送已完成的部分翻译，后台继续写入缓存
 companion_translation_timeout = 60.0
