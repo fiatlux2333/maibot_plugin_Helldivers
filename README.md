@@ -52,23 +52,39 @@ AI 翻译。
 2. 启动 MaiBot（或重载插件）。`_manifest.json` 中声明的 Python 依赖
    （aiohttp、Pillow）会由依赖管线自动安装；也可手动执行
    `pip install -r requirements.txt`。
-3. Runner 首次加载时会在插件目录生成 `config.toml`，可在 MaiBot WebUI 中修改。
+3. Runner 首次加载时校验并合并 `config.toml`。仓库附带的
+   `config.toml` 自带**中文注释**与默认值（Runner 以"补齐缺失字段"
+   方式合并，注释会保留）；也可在 MaiBot WebUI 中修改。
 
 ### 可选：Companion 网页截图
 
 `/hd2news`、`/companion`、`/dss`、`/planet` 需要 Playwright + Chromium：
 
 ```bash
-pip install playwright>=1.50.0
-python -m playwright install chromium
+pip install "playwright>=1.50.0"
+python -m playwright install --with-deps chromium
 ```
 
 未安装时这些指令会优雅降级并提示；其余指令不受影响。
 
+**系统依赖库**：Playwright 的 Chromium 需要系统依赖库，缺失时截图会报
+`Host system is missing dependencies` 或直接超时。`--with-deps` 会自动通过
+apt 安装（Debian/Ubuntu）。
+
+**中文字体**：必须安装 CJK 字体（Debian/Ubuntu：`apt-get install fonts-noto-cjk`）。
+字体缺失**不会报错**，但 Pillow 渲染的图片卡片和 Companion 截图里的中文会
+显示为方框（□）。插件按 `NotoSansCJK` → `wqy-zenhei` → `DejaVu` 顺序查找字体。
+
+**国内服务器下载 Chromium 缓慢或失败**时，可在网络正常的机器下载对应版本的
+`chrome-headless-shell-linux64.zip`（插件以 headless 模式启动，无需完整
+Chrome），解压到 `~/.cache/ms-playwright/chromium_headless_shell-<build>/` 下
+并 `chmod +x`；版本号以 `python -m playwright install --dry-run chromium`
+或报错信息中的路径为准。
+
 ## 配置
 
-Runner 首次加载时按配置模型自动生成 `config.toml` 并在 WebUI 呈现表单，
-修改后重载插件生效。共 87 项配置，关键字段：
+仓库附带的 `config.toml` 已带**中文注释**与默认值（88 项，含 Runner 保留节），
+MaiBot WebUI 的设置表单同样以中文展示；修改后重载插件生效。关键字段：
 
 | 配置 | 说明 |
 |---|---|
