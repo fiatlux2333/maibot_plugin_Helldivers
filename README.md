@@ -1,12 +1,13 @@
 # maibot_plugin_Helldivers · 绝地潜兵2情报助手
 
-> MaiBot 版 Helldivers 2 银河战争图片情报插件，移植自 AstrBot 插件
-> [astrbot_plugin_Helldivers v1.9.0](https://github.com/fiatlux2333/astrbot_plugin_Helldivers)（作者：牡蛎 / fiatlux2333）。
+[English](README_EN.md) | 简体中文
+
+> MaiBot 上的 Helldivers 2 银河战争图片情报插件。
 
 提供银河战争 Dashboard、实时统计、主要/个人任务、战争地图、战线排行、全球事件、
 Steam 公告、Helldivers Wiki、军需簿（武器·护甲·敌人）、Companion 网页截图翻译、
 B站银河快报订阅推送与数据源自诊断。内置双层缓存、限流重试、译名词表预替换与
-AI 翻译，业务逻辑与上游 v1.9.0 保持一致。
+AI 翻译。
 
 ## 功能
 
@@ -104,29 +105,20 @@ Runner 首次加载时按配置模型自动生成 `config.toml` 并在 WebUI 呈
 
 > 趋势速度、预计完成时间和派系战线为插件估算结果，不代表官方结论。
 
-## 致谢
+## 参考与致谢
 
-- [astrbot_plugin_Helldivers](https://github.com/fiatlux2333/astrbot_plugin_Helldivers) —
-  上游插件与全部业务逻辑（牡蛎 / fiatlux2333）
+- [astrbot_plugin_Helldivers](https://github.com/fiatlux2333/astrbot_plugin_Helldivers) — 指令设计与数据层参考
 - [xiaoyueyoqwq/hd2_qqbot](https://github.com/xiaoyueyoqwq/hd2_qqbot) — 早期实现与指令设计参考
 - [Stonemercy/Galactic-Wide-Web](https://github.com/Stonemercy/Galactic-Wide-Web) — 战况面板参考
 - Helldivers Companion — 数据与视觉参考
+- [Helldivers 2 Community API](https://api.helldivers2.dev) — 银河战争数据
 - [MaiBot](https://github.com/Mai-with-u/MaiBot) / [maibot-plugin-sdk](https://github.com/Mai-with-u/maibot-plugin-sdk) — 机器人框架与插件 SDK
-
-## 与上游 AstrBot 版的差异
-
-- 运行平台：MaiBot（Host/Runner 子进程 + maibot_sdk），指令改为 `@Command` 正则匹配，
-  消息发送统一为 `ctx.send.*` 异步 API。
-- 订阅会话键由 AstrBot 的 `unified_msg_origin` 变为 MaiBot 的 `stream_id`，
-  从 AstrBot 版升级后需在目标群重新发送订阅指令。
-- 配置由 `_conf_schema.json` 改为 `PluginConfigBase` 强类型模型（WebUI 自动生成表单），
-  字段与上游 87 项一一对应。
-- 插件标识/UA 更名为 `maibot_plugin_Helldivers`，其余数据源、渲染、翻译、限流与缓存逻辑
-  与上游 v1.9.0 保持一致。
 
 ## 免责声明
 
 本项目为非官方社区作品，与 Arrowhead Game Studios、Sony、PlayStation 无任何隶属或授权关系。
 “HELLDIVERS” 等名称属于各自权利人，仅作兼容说明必要引用。使用本插件需遵守各数据源的使用条款。
+
+本项目使用 [MIT License](LICENSE) 授权。
 
 为了超级地球，为了管理式民主！🌍
