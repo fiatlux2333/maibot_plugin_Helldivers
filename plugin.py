@@ -222,7 +222,7 @@ class HelldiversPlugin(MaiBotPlugin):
                         cfg.companion_screenshot_max_bytes or 12 * 1024 * 1024
                     ),
                     max_pixels=int(cfg.companion_screenshot_max_pixels or 20_000_000),
-                    page_load_timeout=float(cfg.companion_page_load_timeout or 20.0),
+                    page_load_timeout=float(cfg.companion_page_load_timeout or 40.0),
                     translation_timeout=float(cfg.companion_translation_timeout or 60.0),
                     show_inactive=bool(cfg.companion_show_inactive),
                 )
@@ -822,7 +822,7 @@ class HelldiversPlugin(MaiBotPlugin):
 
         interval = max(60, int(self.config.companion_warmup_interval or 300))
         kinds_raw = str(
-            self.config.companion_warmup_kinds or "news_latest,station"
+            self.config.companion_warmup_kinds or "news_latest,station,homepage"
         ).strip()
         kind_map = {
             "news_latest": companion_latest_news_target,
