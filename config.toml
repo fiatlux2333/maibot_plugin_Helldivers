@@ -83,8 +83,8 @@ companion_warmup_enabled = true
 # Companion 后台预热间隔（秒）；建议 300，最小 60
 companion_warmup_interval = 300
 
-# Companion 后台预热页面（逗号分隔）：news_latest=最新新闻、station=民主空间站、homepage=首页
-companion_warmup_kinds = "news_latest,station"
+# Companion 后台预热页面（逗号分隔）：news_latest=最新新闻、station=民主空间站、homepage=首页；默认含 homepage 以便 /companion 命中热缓存（MaiBot 命令有调用时长上限）
+companion_warmup_kinds = "news_latest,station,homepage"
 
 # 启用 Companion 新闻推送：开启后在目标群发送 /hd2news订阅，Companion 新闻更新时自动推送翻译截图；需同时启用截图与后台预热
 companion_news_push_enabled = false
