@@ -152,10 +152,11 @@ class HD2Config(PluginConfigBase):
         description="Companion 后台预热间隔（秒）；建议 300，最小 60",
     )
     companion_warmup_kinds: str = Field(
-        default="news_latest,station",
+        default="news_latest,station,homepage",
         description=(
             "Companion 后台预热页面（逗号分隔）：news_latest=最新新闻、"
-            "station=民主空间站、homepage=首页"
+            "station=民主空间站、homepage=首页；默认含 homepage 以便 "
+            "/companion 命中热缓存（MaiBot 命令有调用时长上限）"
         ),
     )
     companion_news_push_enabled: bool = Field(
