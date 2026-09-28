@@ -58,7 +58,6 @@ def main() -> int:
         if m_field:
             tokens.append((section, m_field.group(1)))
 
-    fields = list(type(inst.config_model()).model_fields.items()) if False else None  # noqa: F841
     config_cls = type(inst.config_model())
     descriptions = {}
     for name, field in config_cls.model_fields.items():
