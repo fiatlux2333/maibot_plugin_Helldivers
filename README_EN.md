@@ -66,7 +66,16 @@ All commands accept both a `/` prefix and the bare command word (e.g. `总览`,
    merges by filling in missing fields and keeps the comments); you can also
    edit it in the MaiBot WebUI.
 
-### Optional: Companion webpage screenshots
+### Optional: Companion webpage screenshots (off by default)
+
+> **⚠️ Important**: `/hd2news`, `/companion`, `/dss`, and `/planet` depend on
+> the `enable_companion_screenshots` switch, which is **off by default** —
+> besides the Python package they also require downloading a Chromium browser.
+> Out of the box these four commands reply with explicit enable instructions,
+> while all other commands (war status, stats, orders, map, wiki, arsenal, …)
+> are unaffected.
+
+To enable:
 
 `/hd2news`, `/companion`, `/dss`, and `/planet` require Playwright + Chromium:
 
@@ -74,6 +83,9 @@ All commands accept both a `/` prefix and the bare command word (e.g. `总览`,
 pip install "playwright>=1.50.0"
 python -m playwright install --with-deps chromium
 ```
+
+Then turn on `enable_companion_screenshots` in the plugin config and save
+(applies automatically ~3s after saving in the WebUI, no reload needed).
 
 Without it these commands degrade gracefully with a hint; other commands are
 unaffected.
@@ -109,7 +121,7 @@ reload is needed. Key fields:
 | `api_contact` | Recommended: a real email, to follow Helldivers community API etiquette |
 | `war_id` | Current war ID (default 801; change on season rotation) |
 | `proxy_url` | HTTP proxy (optional) |
-| `enable_companion_screenshots` | Companion screenshot master switch (on by default) |
+| `enable_companion_screenshots` | Companion screenshot master switch (off by default; install Playwright first) |
 | `companion_render_backend` | playwright (recommended) / local / browserless |
 | `enable_bilibili_galaxy_news` | Bilibili Galaxy News push master switch (off by default) |
 | `bilibili_cookie` | Bilibili cookie; must contain SESSDATA; do not commit to the repo |

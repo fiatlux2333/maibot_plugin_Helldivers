@@ -56,7 +56,14 @@ AI 翻译。
    `config.toml` 自带**中文注释**与默认值（Runner 以"补齐缺失字段"
    方式合并，注释会保留）；也可在 MaiBot WebUI 中修改。
 
-### 可选：Companion 网页截图
+### 可选：Companion 网页截图（默认关闭）
+
+> **⚠️ 重要**：`/hd2news`、`/companion`、`/dss`、`/planet` 依赖
+> `enable_companion_screenshots` 开关，**该开关默认关闭**——因为除 Python 包外
+> 还需要额外下载 Chromium 浏览器。开箱状态下这四条指令会明确提示如何启用，
+> 其余指令（战况、统计、任务、地图、Wiki、军需簿等）不受任何影响。
+
+启用步骤：
 
 `/hd2news`、`/companion`、`/dss`、`/planet` 需要 Playwright + Chromium：
 
@@ -65,7 +72,8 @@ pip install "playwright>=1.50.0"
 python -m playwright install --with-deps chromium
 ```
 
-未安装时这些指令会优雅降级并提示；其余指令不受影响。
+然后在插件配置中打开 `enable_companion_screenshots` 并保存
+（WebUI 保存后约 3 秒自动生效，无需重载插件）。
 
 **系统依赖库**：Playwright 的 Chromium 需要系统依赖库，缺失时截图会报
 `Host system is missing dependencies` 或直接超时。`--with-deps` 会自动通过
@@ -91,7 +99,7 @@ MaiBot WebUI 的设置表单同样以中文展示；保存后插件自动按新�
 | `api_contact` | 建议填写真实邮箱，遵守 Helldivers 社区 API 礼仪 |
 | `war_id` | 当前战争 ID（默认 801，赛季变更时修改） |
 | `proxy_url` | HTTP 代理（可选） |
-| `enable_companion_screenshots` | Companion 截图总开关（默认开） |
+| `enable_companion_screenshots` | Companion 截图总开关（默认关，开启前先装 Playwright） |
 | `companion_render_backend` | playwright（推荐）/ local / browserless |
 | `enable_bilibili_galaxy_news` | B站银河快报推送总开关（默认关） |
 | `bilibili_cookie` | B站 Cookie，必须包含 SESSDATA；勿提交到仓库 |
@@ -105,8 +113,8 @@ MaiBot WebUI 的设置表单同样以中文展示；保存后插件自动按新�
   `cache_update_interval` 建议保持 120–300 秒。
 - **翻译模型**：免费模型建议关闭流式（`translation_stream=false`）并适当调高
   `translation_timeout`；Companion 截图翻译依赖后台预热。
-- **Companion 截图**：需 Playwright + Chromium；截图体积超 IPC 帧上限时
-  插件自动降质重编码为 JPEG 发送。
+- **Companion 截图**：默认关闭；开启前需安装 Playwright + Chromium（见安装
+  章节）。截图体积超 IPC 帧上限时插件自动降质重编码为 JPEG 发送。
 - **银河快报**：B站后台监听必填 `bilibili_cookie`（含 SESSDATA），轮询间隔
   建议 ≥300 秒以降低风控概率；首次启动只建立动态基线，不补发旧内容。
 - **配置热应用**：WebUI 保存配置后插件自动重建客户端、监听与预热组件（约 3 秒防抖），订阅名单持久化不受影响；如需整体重载可发送 `/pm plugin reload github.fiatlux2333.hd2-helper`。

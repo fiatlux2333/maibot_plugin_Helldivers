@@ -63,10 +63,12 @@ class HD2Config(PluginConfigBase):
 
     # ---- Companion 截图 ----
     enable_companion_screenshots: bool = Field(
-        default=True,
+        default=False,
         description=(
             "启用 Helldivers Companion 图片指令（/hd2news、/companion、/dss、"
-            "/planet 的原网页截图）；失败时返回错误提示"
+            "/planet 的原网页截图）；默认关闭，需先安装 playwright 并下载 "
+            "Chromium（pip install playwright && playwright install chromium），"
+            "开启后保存配置自动生效"
         ),
     )
     companion_render_backend: str = Field(
@@ -81,7 +83,8 @@ class HD2Config(PluginConfigBase):
         default="http://browserless:3000",
         description=(
             "Browserless 截图服务地址；同一 Docker 网络可使用 "
-            "http://browserless:3000，也可填写 Browserless Cloud 地址"
+            "http://browserless:3000，也可填写 Browserless Cloud 地址；"
+            "该地址会收到待渲染页面 URL，仅限可信内网或可信服务"
         ),
     )
     companion_browserless_token: str = Field(

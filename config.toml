@@ -35,13 +35,13 @@ proxy_url = ""
 
 # ──────────── Companion 截图 ────────────
 
-# 启用 Helldivers Companion 图片指令（/hd2news、/companion、/dss、/planet 的原网页截图）；失败时返回错误提示
-enable_companion_screenshots = true
+# 启用 Helldivers Companion 图片指令（/hd2news、/companion、/dss、/planet 的原网页截图）；默认关闭，需先安装 playwright 并下载 Chromium（pip install playwright && playwright install chromium），开启后保存配置自动生效
+enable_companion_screenshots = false
 
 # Companion 图片后端：playwright=容器内 Chromium 原网页截图并支持翻译（推荐）；local=Pillow 数据卡片；browserless=仅在关闭翻译时使用远程英文网页截图
 companion_render_backend = "playwright"
 
-# Browserless 截图服务地址；同一 Docker 网络可使用 http://browserless:3000，也可填写 Browserless Cloud 地址
+# Browserless 截图服务地址；同一 Docker 网络可使用 http://browserless:3000，也可填写 Browserless Cloud 地址；该地址会收到待渲染页面 URL，仅限可信内网或可信服务
 companion_browserless_url = "http://browserless:3000"
 
 # Browserless Token（可选）；自建服务未配置 Token 时留空，勿提交到仓库

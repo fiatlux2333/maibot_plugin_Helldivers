@@ -824,7 +824,11 @@ class HelldiversPlugin(MaiBotPlugin):
         self, target: CompanionTarget, *, force: bool = False
     ) -> Path:
         if not self.companion_enabled:
-            raise CompanionConfigurationError("Companion 网页截图尚未启用")
+            raise CompanionConfigurationError(
+                "Companion 截图未启用：请先安装 playwright 并下载 Chromium"
+                "（pip install playwright && playwright install chromium），"
+                "再在插件配置中开启 enable_companion_screenshots（保存后自动生效）"
+            )
         if self.companion_backend == "local":
             raise CompanionConfigurationError("当前配置为 Pillow 本地渲染后端")
 
@@ -1441,6 +1445,19 @@ class HelldiversPlugin(MaiBotPlugin):
         target = companion_latest_news_target()
         try:
             path = await self._capture_companion_page(target)
+        except CompanionConfigurationError as e:
+            logger.info(f"[HD2] /hd2news Companion unavailable: {e}")
+            await self._send_text(stream_id, f"⚠️ {e}")
+            try:
+                _, paths = await self._svc().get_news_image(1)
+            except Exception as fallback_error:
+                logger.warning(f"[HD2] /hd2news local fallback failed: {fallback_error}")
+                paths = []
+            if paths:
+                await self._send_images(
+                    stream_id, paths[:1], fallback="❌ 新闻图片发送失败。"
+                )
+            return True, "Companion 截图未启用，已发送基础新闻卡片", _CMD_WEIGHT
         except Exception as e:
             logger.exception(f"[HD2] /hd2news Companion capture failed: {e}")
             try:
@@ -1487,6 +1504,10 @@ class HelldiversPlugin(MaiBotPlugin):
             path = await self._capture_companion_page(target)
             await self._send_images(stream_id, [path], fallback="❌ Companion 首页截图失败。")
             return True, "已发送 Companion 首页截图", _CMD_WEIGHT
+        except CompanionConfigurationError as e:
+            logger.info(f"[HD2] /companion unavailable: {e}")
+            await self._send_text(stream_id, f"⚠️ {e}")
+            return True, "Companion 截图未启用", _CMD_WEIGHT
         except Exception as e:
             logger.exception(f"[HD2] /companion Companion capture failed: {e}")
             stale = self._stale_fallback_path(target)
@@ -1510,6 +1531,10 @@ class HelldiversPlugin(MaiBotPlugin):
         target = companion_dss_target()
         try:
             path = await self._capture_companion_page(target)
+        except CompanionConfigurationError as e:
+            logger.info(f"[HD2] /dss unavailable: {e}")
+            await self._send_text(stream_id, f"⚠️ {e}")
+            return True, "Companion 截图未启用", _CMD_WEIGHT
         except Exception as e:
             logger.exception(f"[HD2] /dss Companion capture failed: {e}")
             stale = self._stale_fallback_path(target)
@@ -1601,6 +1626,10 @@ class HelldiversPlugin(MaiBotPlugin):
                 message = ""
             await self._send_mixed(stream_id, text=message or None, image_paths=[path])
             return True, "已发送星球详情", _CMD_WEIGHT
+        except CompanionConfigurationError as e:
+            logger.info(f"[HD2] /planet unavailable: {e}")
+            await self._send_text(stream_id, f"⚠️ {e}")
+            return True, "Companion 截图未启用", _CMD_WEIGHT
         except Exception as e:
             logger.exception(f"[HD2] /planet Companion capture failed: {e}")
             stale = self._stale_fallback_path(target)

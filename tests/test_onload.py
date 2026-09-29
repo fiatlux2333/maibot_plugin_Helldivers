@@ -62,6 +62,9 @@ async def main() -> int:
     # Runner 生成 config.toml 用的默认配置导出
     defaults = inst.get_default_config()
     assert len(defaults) == 88, f"默认配置应 87 业务项 + 1 保留节，实际 {len(defaults)}"
+    assert defaults["enable_companion_screenshots"] is False, (
+        "Companion 截图应默认关闭（依赖 playwright，见插件中心评审意见）"
+    )
     schema = inst.get_webui_config_schema()
     assert isinstance(schema, (dict, list)) and schema
     print(f"[OK] 默认配置导出 {len(defaults)} 项（含保留节），WebUI schema 可生成")
