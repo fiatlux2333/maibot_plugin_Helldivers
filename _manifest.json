@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "id": "github.fiatlux2333.hd2-helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "绝地潜兵2情报助手",
   "description": "Helldivers 2 银河战争图片情报：Dashboard、统计、主要任务、地图、战线、全球事件、Steam 公告、Wiki、军需簿、Companion 截图翻译、B站银河快报订阅推送与数据源自诊断。移植自 astrbot_plugin_Helldivers v1.9.0。",
   "author": {
@@ -38,7 +38,8 @@
   "plugin_type": "game",
   "capabilities": [
     "send.text",
-    "send.image"
+    "send.image",
+    "send.hybrid"
   ],
   "i18n": {
     "default_locale": "zh-CN",

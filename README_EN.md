@@ -100,8 +100,9 @@ build number appears in the `playwright install` error message.
 
 The shipped `config.toml` comes with Chinese comments and default values
 (88 fields including the Runner-reserved section); the MaiBot WebUI settings
-form is shown in Chinese as well. Changes take effect after reloading the
-plugin. Key fields:
+form is shown in Chinese as well. After saving, the plugin automatically
+rebuilds its components from the new config (with a ~3s debounce), so no
+reload is needed. Key fields:
 
 | Field | Description |
 |---|---|
@@ -130,8 +131,10 @@ Full field list and descriptions: [`hd2/config_schema.py`](hd2/config_schema.py)
   SESSDATA); a polling interval of ≥300s is recommended to reduce risk-control
   triggers. The first start only builds a dynamic baseline and does not backfill
   old posts.
-- **Hot reload**: configuration involving clients, monitors, and warm-up requires
-  a plugin reload to take effect.
+- **Config hot-apply**: after saving in the WebUI, the plugin automatically
+  rebuilds clients, monitors, and warm-up from the new config (~3s debounce);
+  persisted subscriptions are unaffected. For a full reload, send
+  `/pm plugin reload github.fiatlux2333.hd2-helper`.
 
 ## Data Sources
 

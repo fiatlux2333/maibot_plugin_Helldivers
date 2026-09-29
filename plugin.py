@@ -171,6 +171,9 @@ _MAX_IMAGE_WIRE_BYTES = 11 * 1024 * 1024
 # 一条 hybrid 消息（全部段合计）的线材预算；超出则降级为逐条发送。
 _HYBRID_WIRE_BUDGET = 12 * 1024 * 1024
 
+# 配置热应用的防抖窗口：WebUI 保存可能在数秒内连续触发多次回调。
+_CONFIG_REAPPLY_DEBOUNCE_SECONDS = 3.0
+
 
 class HelldiversPlugin(MaiBotPlugin):
     """Helldivers 2 银河战争情报助手。"""
@@ -189,6 +192,10 @@ class HelldiversPlugin(MaiBotPlugin):
         self._companion_warmup_task: asyncio.Task | None = None
         self.companion_news_monitor: CompanionNewsMonitor | None = None
         self._companion_news_push_enabled = False
+        self._config_reapply_task: asyncio.Task | None = None
+        self._config_reapply_pending = False
+        self._rebuilding = False
+        self._unloading = False
 
     # ------------------------------------------------------------------
     # 生命周期
@@ -196,8 +203,19 @@ class HelldiversPlugin(MaiBotPlugin):
 
     async def on_load(self) -> None:
         set_plugin_data_base(Path(self.ctx.paths.data_dir))
-        data_dir = get_plugin_data_dir(PLUGIN_NAME)
         HEALTH.mark_boot()
+        self._unloading = False
+        self._rebuilding = False
+        self._config_reapply_pending = False
+        await self._build_from_config()
+        logger.info(
+            f"[HD2] plugin initialized {PLUGIN_VERSION}, "
+            f"data_dir={get_plugin_data_dir(PLUGIN_NAME)}"
+        )
+
+    async def _build_from_config(self) -> None:
+        """按当前 self.config 构造全部客户端/服务/监听（on_load 与热应用共用）。"""
+        data_dir = get_plugin_data_dir(PLUGIN_NAME)
         cfg = self.config
 
         self.companion_enabled = bool(cfg.enable_companion_screenshots)
@@ -485,9 +503,6 @@ class HelldiversPlugin(MaiBotPlugin):
                 "[HD2] 建议在插件配置中填写 api_contact（联系邮箱），"
                 "以遵守 Helldivers API 礼仪"
             )
-        logger.info(
-            f"[HD2] plugin initialized {PLUGIN_VERSION}, data_dir={data_dir}"
-        )
         self.companion_news_monitor = CompanionNewsMonitor(
             data_dir / "companion_news"
         )
@@ -495,6 +510,21 @@ class HelldiversPlugin(MaiBotPlugin):
         self._start_companion_warmup()
 
     async def on_unload(self) -> None:
+        self._unloading = True
+        self._config_reapply_pending = False
+        task = self._config_reapply_task
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._config_reapply_task = None
+        await self._teardown()
+        logger.info("[HD2] plugin unloaded")
+
+    async def _teardown(self) -> None:
+        """停止全部后台任务并释放组件（on_unload 与配置热应用共用）。"""
         if self._companion_warmup_task is not None:
             self._companion_warmup_task.cancel()
             try:
@@ -523,15 +553,55 @@ class HelldiversPlugin(MaiBotPlugin):
             except Exception as e:
                 logger.warning(f"[HD2] service stop error: {e}")
             self.service = None
-        logger.info("[HD2] plugin unloaded")
 
     async def on_config_update(self, scope: str, config_data: dict, version: str) -> None:
         if scope == "self":
             logger.info(
-                "[HD2] 插件配置已更新 (version=%s)；涉及客户端、监听与预热的配置"
-                "需重载插件后生效",
+                "[HD2] 插件配置已更新 (version=%s)，稍后自动按新配置重建组件",
                 version,
             )
+            self._schedule_config_reapply()
+
+    def _schedule_config_reapply(self) -> None:
+        """标记待重建并由单一 worker 任务执行（防抖、避免并发重建）。"""
+        self._config_reapply_pending = True
+        if self._config_reapply_task is None or self._config_reapply_task.done():
+            self._config_reapply_task = asyncio.create_task(
+                self._config_reapply_worker(), name="hd2-config-reapply"
+            )
+
+    async def _config_reapply_worker(self) -> None:
+        try:
+            while self._config_reapply_pending and not self._unloading:
+                self._config_reapply_pending = False
+                await asyncio.sleep(_CONFIG_REAPPLY_DEBOUNCE_SECONDS)
+                if self._config_reapply_pending:
+                    # 防抖窗口内又收到新变更，重新计时
+                    continue
+                await self._rebuild_from_config()
+        except asyncio.CancelledError:
+            pass  # on_unload 取消：随真实卸载清理，不再重建
+        finally:
+            if self._config_reapply_task is asyncio.current_task():
+                self._config_reapply_task = None
+
+    async def _rebuild_from_config(self) -> None:
+        """用最新 self.config 重建全部组件；失败时保留现状并留痕。"""
+        if self._rebuilding or self._unloading:
+            return
+        self._rebuilding = True
+        try:
+            logger.info("[HD2] 正在按新配置重建组件…")
+            await self._teardown()
+            await self._build_from_config()
+            logger.info("[HD2] 配置热应用完成，组件已按新配置重建")
+        except Exception as e:
+            logger.exception(
+                f"[HD2] 配置热应用失败: {e}；"
+                "可发送 /pm plugin reload github.fiatlux2333.hd2-helper 重新加载插件"
+            )
+        finally:
+            self._rebuilding = False
 
     # ------------------------------------------------------------------
     # 发送辅助

@@ -70,6 +70,41 @@ async def main() -> int:
     assert inst.service is None
     print("[OK] on_unload 清理完成（service 置空）")
 
+    # ---- 配置热应用：保存配置后自动按新配置重建组件，无需重载插件 ----
+    inst2 = load_plugin()
+    inst2._ctx = FakeCtx()
+    raw2 = inst2.get_default_config()
+    raw2["enable_companion_screenshots"] = False
+    raw2["enable_background_refresh"] = False
+    inst2.set_plugin_config(raw2)
+    await inst2.on_load()
+    old_service = inst2.service
+    assert old_service is not None
+
+    sys.modules["_maibot_plugin_hd2_onload"]._CONFIG_REAPPLY_DEBOUNCE_SECONDS = 0.05
+    raw2["war_id"] = 802
+    inst2.set_plugin_config(raw2)
+    await inst2.on_config_update("self", raw2, "test-version")
+    assert inst2._config_reapply_task is not None, "on_config_update 应调度重建任务"
+    await inst2._config_reapply_task
+    assert inst2.service is not old_service, "热应用应重建 service 实例"
+    assert inst2.service.client.war_id == 802, "重建后应使用新配置"
+    assert inst2._config_reapply_task is None, "worker 结束后应清空任务引用"
+    assert not inst2._config_reapply_pending
+    print("[OK] on_config_update 热应用：组件按新配置自动重建（war_id=802）")
+
+    # ---- on_unload 取消挂起的重建，不再拉起组件 ----
+    raw2["war_id"] = 803
+    inst2.set_plugin_config(raw2)
+    await inst2.on_config_update("self", raw2, "test-version")
+    pending_task = inst2._config_reapply_task
+    assert pending_task is not None and not pending_task.done()
+    await inst2.on_unload()
+    assert pending_task.done(), "on_unload 应取消挂起的重建任务"
+    assert inst2.service is None, "卸载后不应因热应用再次构造组件"
+    assert inst2._config_reapply_task is None
+    print("[OK] on_unload 取消挂起的配置重建，干净卸载")
+
     print("\n=== on_load/on_unload 集成测试通过 ===")
     return 0
 
